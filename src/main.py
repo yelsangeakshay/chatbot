@@ -7,7 +7,7 @@ import time
 
 # Streamlit configuration
 st.set_page_config(
-    page_title="DF Chat",
+    page_title="ChatBot by DataDiggerz",
     page_icon="💬",
     layout="wide"
 )
