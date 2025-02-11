@@ -154,7 +154,7 @@ class DataFrameChat:
                     st.success(f"Successfully loaded {uploaded_file.name}")
 
     def run(self):
-        st.title("🤖 DataFrame ChatBot - Ollama")
+        st.title("🤖 Vois ChatBot by DataDiggerz")
         
         model, temperature = self.setup_sidebar()
         self.initialize_llm(model, temperature)
@@ -163,7 +163,7 @@ class DataFrameChat:
         self.display_data_info()
         
         st.divider()
-        st.subheader("💬 Chat Interface")
+        st.subheader("💬Chat")
         
         for message in st.session_state.chat_history:
             with st.chat_message(message["role"]):
