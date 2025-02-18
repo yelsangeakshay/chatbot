@@ -1,9 +1,18 @@
 import streamlit as st
 import pandas as pd
+import openai
+import os
 from langchain_experimental.agents import create_pandas_dataframe_agent
-from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
 from typing import Optional
 import time
+from dotenv import load_dotenv
+from langchain.agents import AgentExecutor
+
+# Load environment variables
+load_dotenv()
+#OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_KEY = "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"
 
 # Streamlit configuration
 st.set_page_config(
@@ -25,14 +34,30 @@ class DataFrameChat:
             st.session_state.file_name = None
         if "llm" not in st.session_state:
             st.session_state.llm = None
+        if "sheet_names" not in st.session_state:
+            st.session_state.sheet_names = []
+        if "selected_sheet" not in st.session_state:
+            st.session_state.selected_sheet = None
 
     def read_data(self, file) -> Optional[pd.DataFrame]:
         try:
             if file.name.endswith(".csv"):
                 df = pd.read_csv(file)
+                st.session_state.sheet_names = ["Sheet1"]  # Default sheet name for CSV
+                st.session_state.selected_sheet = "Sheet1"
+                return df
+            elif file.name.endswith(".xlsx") or file.name.endswith(".xls"):
+                # Read all sheet names
+                xls = pd.ExcelFile(file, engine='openpyxl')
+                st.session_state.sheet_names = xls.sheet_names
+                # Let the user select a sheet
+                if not st.session_state.selected_sheet:
+                    st.session_state.selected_sheet = st.session_state.sheet_names[0]
+                df = pd.read_excel(file, sheet_name=st.session_state.selected_sheet, engine='openpyxl')
+                return df
             else:
-                df = pd.read_excel(file)
-            return df
+                st.error("Unsupported file format. Please upload a CSV or Excel file.")
+                return None
         except Exception as e:
             st.error(f"Error reading file: {str(e)}")
             return None
@@ -40,65 +65,38 @@ class DataFrameChat:
     def setup_sidebar(self):
         with st.sidebar:
             st.header("⚙️ Settings")
-            model = st.selectbox(
-                "Select Model",
-                ["mistral", "llama2"],
-                index=0
-            )
-            temperature = st.slider(
-                "Temperature",
-                min_value=0.0,
-                max_value=1.0,
-                value=0.0,  # Set to 0 for more deterministic responses
-                step=0.1
-            )
+            model = st.selectbox("Select Model", ["gpt-3.5-turbo", "gpt-4"], index=0)
+            temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
+            if st.session_state.sheet_names:
+                st.session_state.selected_sheet = st.selectbox(
+                    "Select Sheet",
+                    st.session_state.sheet_names,
+                    index=st.session_state.sheet_names.index(st.session_state.selected_sheet)
+                )
             return model, temperature
 
     def initialize_llm(self, model: str, temperature: float):
         try:
-            st.session_state.llm = ChatOllama(
-                model=model,
-                temperature=temperature,
-                timeout=30  # Add timeout for LLM calls
-            )
+            st.session_state.llm = ChatOpenAI(model_name=model, openai_api_key=OPENAI_API_KEY, temperature=temperature)
+            return st.session_state.llm
         except Exception as e:
             st.error(f"Error initializing LLM: {str(e)}")
             return None
 
-    def handle_basic_queries(self, query: str) -> Optional[str]:
-        """Handle basic DataFrame queries without using the agent"""
-        query_lower = query.lower()
-        
-        try:
-            if "number of rows" in query_lower or "how many rows" in query_lower:
-                return f"The DataFrame has {len(st.session_state.df)} rows."
-            
-            if "number of columns" in query_lower or "how many columns" in query_lower:
-                return f"The DataFrame has {len(st.session_state.df.columns)} columns."
-            
-            if "show columns" in query_lower or "what columns" in query_lower or "list columns" in query_lower:
-                return f"The columns are: {', '.join(st.session_state.df.columns)}"
-            
-            if "show first" in query_lower or "show top" in query_lower:
-                n = 5  # default number of rows
-                return f"Here are the first {n} rows:\n```\n{st.session_state.df.head(n).to_string()}\n```"
-                
-            return None
-            
-        except Exception as e:
-            return f"Error processing basic query: {str(e)}"
-
     def create_agent(self):
         if st.session_state.df is not None and st.session_state.llm is not None:
             try:
-                return create_pandas_dataframe_agent(
+                agent = create_pandas_dataframe_agent(
                     llm=st.session_state.llm,
                     df=st.session_state.df,
                     verbose=True,
-                    handle_parsing_errors=True,
-                    max_iterations=2,  # Reduce max iterations
-                    allow_python_repl=True,
+                    max_iterations=2,
                     allow_dangerous_code=True
+                )
+                return AgentExecutor.from_agent_and_tools(
+                    agent=agent.agent,
+                    tools=agent.tools,
+                    handle_parsing_errors=True
                 )
             except Exception as e:
                 st.error(f"Error creating agent: {str(e)}")
@@ -106,89 +104,48 @@ class DataFrameChat:
         return None
 
     def process_query(self, agent, user_prompt: str) -> str:
-        # First try handling basic queries
-        basic_response = self.handle_basic_queries(user_prompt)
-        if basic_response:
-            return basic_response
-            
-        # If not a basic query, use the agent
         try:
             with st.spinner("Thinking..."):
                 start_time = time.time()
                 response = agent.invoke(user_prompt)
-                if time.time() - start_time > 10:  # If taking too long
+                if time.time() - start_time > 10:
                     st.warning("Response took longer than expected. Consider rephrasing your question.")
                 return str(response['output']) if isinstance(response, dict) else str(response)
         except Exception as e:
-            error_msg = str(e)
-            if "parsing errors" in error_msg.lower():
-                return "I apologize, but I had trouble understanding the output. Could you rephrase your question?"
-            return f"I encountered an error: {error_msg}. Please try rephrasing your question."
-
-    def display_data_info(self):
-        if st.session_state.df is not None:
-            with st.expander("📊 Data Information", expanded=False):
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.write("DataFrame Preview:")
-                    st.dataframe(st.session_state.df.head(), use_container_width=True)
-                with col2:
-                    st.write("Data Statistics:")
-                    st.write(f"Total Rows: {len(st.session_state.df)}")
-                    st.write(f"Total Columns: {len(st.session_state.df.columns)}")
-                    st.write("Columns:", ", ".join(st.session_state.df.columns))
+            return f"I encountered an error: {str(e)}. Please try rephrasing your question."
 
     def handle_file_upload(self):
-        uploaded_file = st.file_uploader(
-            "Choose a file",
-            type=["csv", "xlsx", "xls"],
-            help="Upload your data file (CSV or Excel)"
-        )
+        uploaded_file = st.file_uploader("Choose a file", type=["csv", "xlsx", "xls"], help="Upload your data file (CSV or Excel)")
         
-        if uploaded_file and (not st.session_state.file_name or 
-                            st.session_state.file_name != uploaded_file.name):
+        if uploaded_file and (not st.session_state.file_name or st.session_state.file_name != uploaded_file.name):
             with st.spinner("Loading data..."):
                 st.session_state.df = self.read_data(uploaded_file)
                 st.session_state.file_name = uploaded_file.name
                 if st.session_state.df is not None:
-                    st.success(f"Successfully loaded {uploaded_file.name}")
+                    st.success(f"Successfully loaded {uploaded_file.name} (Sheet: {st.session_state.selected_sheet})")
+                    st.write(st.session_state.df.head())
 
     def run(self):
         st.title("🤖 Vois ChatBot by DataDiggerz")
-        
         model, temperature = self.setup_sidebar()
         self.initialize_llm(model, temperature)
-        
         self.handle_file_upload()
-        self.display_data_info()
         
-        st.divider()
-        st.subheader("💬Chat")
-        
+        st.subheader("💬 Chat")
         for message in st.session_state.chat_history:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
         
-        user_prompt = st.chat_input(
-            "Ask about your data...",
-            disabled=st.session_state.df is None
-        )
+        user_prompt = st.chat_input("Ask about your data...", disabled=st.session_state.df is None)
         
         if user_prompt:
             st.chat_message("user").markdown(user_prompt)
-            st.session_state.chat_history.append({
-                "role": "user",
-                "content": user_prompt
-            })
+            st.session_state.chat_history.append({"role": "user", "content": user_prompt})
             
             agent = self.create_agent()
             if agent:
                 response = self.process_query(agent, user_prompt)
-                
-                st.session_state.chat_history.append({
-                    "role": "assistant",
-                    "content": response
-                })
+                st.session_state.chat_history.append({"role": "assistant", "content": response})
                 with st.chat_message("assistant"):
                     st.markdown(response)
             else:
