@@ -11,7 +11,8 @@ from langchain.agents import AgentExecutor
 
 # Load environment variables
 load_dotenv()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+#OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_KEY = "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"
 
 # Streamlit configuration
 st.set_page_config(
