@@ -3,9 +3,7 @@ import pandas as pd
 import openai
 import os
 import openai
-import os
 from langchain_experimental.agents import create_pandas_dataframe_agent
-from langchain_openai import ChatOpenAI
 from langchain_openai import ChatOpenAI
 from typing import Optional
 import time
@@ -18,13 +16,6 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 #For local testing
 #OPENAI_API_KEY = "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"
-from dotenv import load_dotenv
-from langchain.agents import AgentExecutor
-
-# Load environment variables
-load_dotenv()
-#OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_API_KEY = "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"
 
 # Streamlit configuration
 st.set_page_config(
