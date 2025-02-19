@@ -44,7 +44,7 @@ mdurl==0.1.2
 multidict==6.1.0
 mypy-extensions==1.0.0
 narwhals==1.26.0
-numpy==2.2.2
+numpy
 ollama==0.4.7
 openai==1.61.1
 openpyxl==3.1.5
