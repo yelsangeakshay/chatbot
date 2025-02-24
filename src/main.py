@@ -69,16 +69,20 @@ class DataFrameChat:
             return None
 
     def setup_sidebar(self):
-        with st.sidebar:
-            st.header("⚙️ Settings")
-            model = st.selectbox("Select Model", ["gpt-3.5-turbo", "gpt-4"], index=0)
-            temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
-            if st.session_state.sheet_names:
-                st.session_state.selected_sheet = st.selectbox(
-                    "Select Sheet",
-                    st.session_state.sheet_names,
-                    index=st.session_state.sheet_names.index(st.session_state.selected_sheet))
-            return model, temperature
+        model = "gpt-4"
+        temperature = 0.5
+        return model, temperature
+        #with st.sidebar:
+            #st.header("⚙️ Settings")
+            #model = st.selectbox("Select Model", ["gpt-3.5-turbo", "gpt-4"], index=0)
+            
+            #temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
+            # if st.session_state.sheet_names:
+            #     st.session_state.selected_sheet = st.selectbox(
+            #         "Select Sheet",
+            #         st.session_state.sheet_names,
+            #         index=st.session_state.sheet_names.index(st.session_state.selected_sheet))
+           
 
     def initialize_llm(self, model: str, temperature: float):
         try:
@@ -208,6 +212,9 @@ class DataFrameChat:
                                     "content": st.session_state.success_message
                                 })
                                 st.session_state.reservation_mode = False
+                                # Re-render the DataFrame to show the updated reservation
+                                st.write("Updated data:")
+                                st.write(st.session_state.df)
             else:
                 # Process other queries using the agent
                 agent = self.create_agent()
