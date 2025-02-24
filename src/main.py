@@ -7,6 +7,7 @@ from typing import Optional
 import time
 from dotenv import load_dotenv
 from langchain.agents import AgentExecutor
+import re
 
 # Load environment variables
 load_dotenv()
@@ -49,21 +50,42 @@ class DataFrameChat:
 
     def read_data(self, file) -> Optional[pd.DataFrame]:
         try:
-            if file.name.endswith(".csv"):
-                df = pd.read_csv(file)
-                st.session_state.sheet_names = ["Sheet1"]
-                st.session_state.selected_sheet = "Sheet1"
-                return df
-            elif file.name.endswith(".xlsx") or file.name.endswith(".xls"):
-                xls = pd.ExcelFile(file, engine='openpyxl')
-                st.session_state.sheet_names = xls.sheet_names
-                if not st.session_state.selected_sheet:
-                    st.session_state.selected_sheet = st.session_state.sheet_names[0]
-                df = pd.read_excel(file, sheet_name=st.session_state.selected_sheet, engine='openpyxl')
-                return df
+            if isinstance(file, str):
+                if file.endswith(".csv"):
+                    df = pd.read_csv(file)
+                    st.session_state.sheet_names = ["Sheet1"]
+                    st.session_state.selected_sheet = "Sheet1"
+                elif file.endswith(".xlsx") or file.endswith(".xls"):
+                    xls = pd.ExcelFile(file, engine='openpyxl')
+                    st.session_state.sheet_names = xls.sheet_names
+                    if not st.session_state.selected_sheet:
+                        st.session_state.selected_sheet = st.session_state.sheet_names[0]
+                    df = pd.read_excel(file, sheet_name=st.session_state.selected_sheet, engine='openpyxl')
+                else:
+                    st.error("Unsupported file format. Please upload a CSV or Excel file.")
+                    return None
+            elif hasattr(file, "name"):
+                if file.name.endswith(".csv"):
+                    df = pd.read_csv(file)
+                    st.session_state.sheet_names = ["Sheet1"]
+                    st.session_state.selected_sheet = "Sheet1"
+                elif file.name.endswith(".xlsx") or file.name.endswith(".xls"):
+                    xls = pd.ExcelFile(file, engine='openpyxl')
+                    st.session_state.sheet_names = xls.sheet_names
+                    if not st.session_state.selected_sheet:
+                        st.session_state.selected_sheet = st.session_state.sheet_names[0]
+                    df = pd.read_excel(file, sheet_name=st.session_state.selected_sheet, engine='openpyxl')
+                else:
+                    st.error("Unsupported file format. Please upload a CSV or Excel file.")
+                    return None
             else:
-                st.error("Unsupported file format. Please upload a CSV or Excel file.")
+                st.error("Invalid file type. Please provide a valid file path or file upload object.")
                 return None
+
+            if "Date (mm/dd/yyyy)" in df.columns:
+                df["Date (mm/dd/yyyy)"] = pd.to_datetime(df["Date (mm/dd/yyyy)"], errors='coerce')
+
+            return df
         except Exception as e:
             st.error(f"Error reading file: {str(e)}")
             return None
@@ -72,17 +94,6 @@ class DataFrameChat:
         model = "gpt-4"
         temperature = 0.5
         return model, temperature
-        #with st.sidebar:
-            #st.header("⚙️ Settings")
-            #model = st.selectbox("Select Model", ["gpt-3.5-turbo", "gpt-4"], index=0)
-            
-            #temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
-            # if st.session_state.sheet_names:
-            #     st.session_state.selected_sheet = st.selectbox(
-            #         "Select Sheet",
-            #         st.session_state.sheet_names,
-            #         index=st.session_state.sheet_names.index(st.session_state.selected_sheet))
-           
 
     def initialize_llm(self, model: str, temperature: float):
         try:
@@ -124,41 +135,82 @@ class DataFrameChat:
             return f"I encountered an error: {str(e)}. Please try rephrasing your question."
 
     def handle_file_upload(self):
-        uploaded_file = st.file_uploader("Choose a file", type=["csv", "xlsx", "xls"], help="Upload your data file (CSV or Excel)")
-        
-        if uploaded_file and (not st.session_state.file_name or st.session_state.file_name != uploaded_file.name):
-            with st.spinner("Loading data..."):
-                st.session_state.df = self.read_data(uploaded_file)
-                st.session_state.file_name = uploaded_file.name
-                if st.session_state.df is not None:
-                    st.success(f"Successfully loaded {uploaded_file.name} (Sheet: {st.session_state.selected_sheet})")
-                    st.session_state.last_displayed_data = st.session_state.df.head()
-                    st.write(st.session_state.last_displayed_data)
+        file_path = "chattest.xlsx"
+        st.session_state.df = self.read_data(file_path)
+        if st.session_state.df is not None:
+                st.session_state.last_displayed_data = st.session_state.df.head()
+                st.write(st.session_state.last_displayed_data)
 
     def add_reserved_column(self):
-        """Add a 'Reserved By' column to the DataFrame if it doesn't already exist."""
         if st.session_state.df is not None and "Reserved By" not in st.session_state.df.columns:
             st.session_state.df["Reserved By"] = pd.NA
 
-    def reserve_data(self, row_index: int, reserved_by: str = "Test User") -> bool:
-        """Reserve a row by updating the 'Reserved By' column."""
-        if st.session_state.df is not None and row_index < len(st.session_state.df):
+    def extract_row_number(self, prompt):
+        pattern = r'(?:can you )?reserve\s+(?:this\s+)?ro(?:w)?\s*(\d+)'
+        match = re.search(pattern, prompt.lower())
+        if match:
+            return int(match.group(1))
+        return None
+
+    def reserve_data(self, row_index: int, reserved_by: str = "Akshay") -> bool:
+        if st.session_state.df is not None and 0 <= row_index < len(st.session_state.df):
             try:
+                if "Reserved By" not in st.session_state.df.columns:
+                    st.session_state.df["Reserved By"] = pd.NA
+                
                 current_value = st.session_state.df.at[row_index, "Reserved By"]
-                if pd.isna(current_value):
+                if pd.isna(current_value) or current_value == "" or current_value is None:
                     st.session_state.df.at[row_index, "Reserved By"] = reserved_by
-                    st.session_state.show_success = True
-                    st.session_state.success_message = f"✅ Row {row_index} has been successfully reserved by {reserved_by}."
+                    success_message = f"✅ Row {row_index} has been successfully reserved by {reserved_by}."
+                    st.session_state.df = self.clean_dataframe(st.session_state.df)
+                    st.session_state.chat_history.append({
+                        "role": "assistant",
+                        "content": success_message
+                    })
+                    st.success(success_message)
                     return True
                 else:
-                    st.warning(f"⚠️ Row {row_index} is already reserved by {current_value}")
+                    failure_message = f"⚠️ Row {row_index} is already reserved by {current_value}"
+                    jira_link = "https://yourcompany.atlassian.net/create/ticket"
+                    full_message = f"{failure_message}\nPlease [click here]({jira_link}) to raise a request in Jira."
+                    st.session_state.chat_history.append({
+                        "role": "assistant", 
+                        "content": full_message
+                    })
+                    st.warning(failure_message)
+                    st.markdown(f"Please [click here]({jira_link}) to raise a request in Jira.")
                     return False
             except Exception as e:
-                st.error(f"❌ Error during reservation: {str(e)}")
+                failure_message = f"❌ Error during reservation: {str(e)}"
+                jira_link = "https://yourcompany.atlassian.net/create/ticket"
+                full_message = f"{failure_message}\nPlease [click here]({jira_link}) to raise a request in Jira."
+                st.session_state.chat_history.append({
+                    "role": "assistant", 
+                    "content": full_message
+                })
+                st.error(failure_message)
+                st.markdown(f"Please [click here]({jira_link}) to raise a request in Jira.")
                 return False
         else:
-            st.error("❌ Invalid row index or no data loaded.")
+            failure_message = "❌ Invalid row index or no data loaded."
+            jira_link = "https://yourcompany.atlassian.net/create/ticket"
+            full_message = f"{failure_message}\nPlease [click here]({jira_link}) to raise a request in Jira."
+            st.session_state.chat_history.append({
+                "role": "assistant",
+                "content": full_message
+            })
+            st.error(failure_message)
+            st.markdown(f"Please [click here]({jira_link}) to raise a request in Jira.")
             return False
+
+    def clean_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
+        for col in df.columns:
+            if df[col].dtype == "object":
+                try:
+                    df[col] = pd.to_datetime(df[col], errors='ignore')
+                except:
+                    pass
+        return df
 
     def run(self):
         st.title("🤖 Vois ChatBot by DataDiggerz")
@@ -166,13 +218,7 @@ class DataFrameChat:
         self.initialize_llm(model, temperature)
         self.handle_file_upload()
         
-        # Add 'Reserved By' column if it doesn't exist
         self.add_reserved_column()
-        
-        # Display success message if it exists
-        if st.session_state.show_success:
-            st.success(st.session_state.success_message)
-            st.session_state.show_success = False  # Reset the flag after displaying the message
         
         st.subheader("💬 Chat")
         for message in st.session_state.chat_history:
@@ -185,38 +231,18 @@ class DataFrameChat:
             st.chat_message("user").markdown(user_prompt)
             st.session_state.chat_history.append({"role": "user", "content": user_prompt})
             
-            # Check if the user wants to reserve data
-            if "reserve" in user_prompt.lower():
-                st.session_state.reservation_mode = True
-                
-            if st.session_state.reservation_mode:
-                if st.session_state.df is not None:
-                    st.write("Current data:")
-                    st.write(st.session_state.df)
-                    
-                    col1, col2 = st.columns([3, 1])
-                    with col1:
-                        row_index = st.number_input(
-                            "Enter the row index to reserve:",
-                            min_value=0,
-                            max_value=len(st.session_state.df) - 1,
-                            value=0,
-                            step=1
-                        )
-                    with col2:
-                        if st.button("Confirm Reservation"):
-                            if self.reserve_data(row_index):
-                                # Add successful reservation to chat history
-                                st.session_state.chat_history.append({
-                                    "role": "assistant",
-                                    "content": st.session_state.success_message
-                                })
-                                st.session_state.reservation_mode = False
-                                # Re-render the DataFrame to show the updated reservation
-                                st.write("Updated data:")
-                                st.write(st.session_state.df)
+            row_number = self.extract_row_number(user_prompt)
+            
+            if row_number is not None:
+                self.reserve_data(row_number)
+                st.write("Updated data:")
+                st.write(st.session_state.df)
+            elif "reserve" in user_prompt.lower():
+                response = "Please specify a row number to reserve (e.g., 'can you reserve this row 5')"
+                st.session_state.chat_history.append({"role": "assistant", "content": response})
+                with st.chat_message("assistant"):
+                    st.markdown(response)
             else:
-                # Process other queries using the agent
                 agent = self.create_agent()
                 if agent:
                     response = self.process_query(agent, user_prompt)
