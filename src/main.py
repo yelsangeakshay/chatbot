@@ -15,7 +15,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Streamlit configuration
 st.set_page_config(
-    page_title="ChatBot by DataDiggerz",
+    page_title="V_TRAIN",
     page_icon="💬",
     layout="wide"
 )
@@ -84,6 +84,9 @@ class DataFrameChat:
 
             if "Date (mm/dd/yyyy)" in df.columns:
                 df["Date (mm/dd/yyyy)"] = pd.to_datetime(df["Date (mm/dd/yyyy)"], errors='coerce')
+#convert the customer Id to integer
+            if "Customer ID" in df.columns:
+                df["Customer ID"] = pd.to_numeric(df["Customer ID"], errors='coerce').fillna(0).astype(int)
 
             return df
         except Exception as e:
@@ -130,6 +133,12 @@ class DataFrameChat:
                 response = agent.invoke(user_prompt)
                 if time.time() - start_time > 10:
                     st.warning("Response took longer than expected. Consider rephrasing your question.")
+                # Ensure Customer ID is returned as an integer
+                if "customer id" in user_prompt.lower() and isinstance(response, dict):
+                    output_text = response.get('output', '')
+                    customer_ids = re.findall(r'\d+', output_text)  # Extract numbers
+                    if customer_ids:
+                        return ", ".join(map(str, map(int, customer_ids)))  # Convert to int & return as string
                 return str(response['output']) if isinstance(response, dict) else str(response)
         except Exception as e:
             return f"I encountered an error: {str(e)}. Please try rephrasing your question."
