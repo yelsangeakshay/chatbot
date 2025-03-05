@@ -135,7 +135,7 @@ class DataFrameChat:
             return f"I encountered an error: {str(e)}. Please try rephrasing your prompt."
 
     def handle_file_upload(self):
-        file_path = "chattest.xlsx"
+        file_path = "https://raw.githubusercontent.com/yelsangeakshay/chatbot/main/src/chattest.xlsx"
         st.session_state.df = self.read_data(file_path)
         if st.session_state.df is not None:
             st.session_state.last_displayed_data = st.session_state.df.head()
