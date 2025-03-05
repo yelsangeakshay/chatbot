@@ -15,7 +15,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Streamlit configuration
 st.set_page_config(
-    page_title="ChatBot by DataDiggerz",
+    page_title="V-TRAIN",
     page_icon="💬",
     layout="wide"
 )
@@ -139,7 +139,7 @@ class DataFrameChat:
         st.session_state.df = self.read_data(file_path)
         if st.session_state.df is not None:
             st.session_state.last_displayed_data = st.session_state.df.head()
-            st.write(st.session_state.last_displayed_data)
+            #st.write(st.session_state.last_displayed_data) #Commenting as not needed.
 
     def add_reserved_column(self):
         if st.session_state.df is not None and "Reserved By" not in st.session_state.df.columns:
@@ -347,7 +347,7 @@ class DataFrameChat:
         return df
 
     def run(self):
-        st.title("🤖 Vois ChatBot by DataDiggerz")
+        st.title("🤖 V-TRAIN")
         model, temperature = self.setup_sidebar()
         self.initialize_llm(model, temperature)
         self.handle_file_upload()
