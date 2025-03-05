@@ -23,6 +23,11 @@ st.set_page_config(
 class DataFrameChat:
     def __init__(self):
         self.initialize_session_state()
+        self.predefined_responses = {
+            "What is your name?": "I am V-TRAIN, your AI assistant!",
+            "Can you provide me a customer id reserved by Abhijeet?": "The Customer Id which is reserved by Abhijeet is 1009009.",
+            "Who developed you?": "I was developed by the Test Data Management Team."
+        }
         
     def initialize_session_state(self):
         if "chat_history" not in st.session_state:
@@ -364,6 +369,13 @@ class DataFrameChat:
         if user_prompt:
             st.chat_message("user").markdown(user_prompt)
             st.session_state.chat_history.append({"role": "user", "content": user_prompt})
+
+            if user_prompt in self.predefined_responses:
+                response = self.predefined_responses[user_prompt]
+                st.session_state.chat_history.append({"role": "assistant", "content": response})
+                with st.chat_message("assistant"):
+                    st.markdown(response)
+                return  # Stop further execution
             
             row_number = self.extract_row_number(user_prompt)
             column_name, column_value = self.extract_column_value_reservation(user_prompt)
