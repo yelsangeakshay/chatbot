@@ -141,7 +141,7 @@ class DataFrameChat:
         st.session_state.df = self.read_data(file_path)
         if st.session_state.df is not None:
             st.session_state.last_displayed_data = st.session_state.df.head()
-            st.write(st.session_state.last_displayed_data)
+            #st.write(st.session_state.last_displayed_data)
 
     def add_reserved_column(self):
         if st.session_state.df is not None and "Reserved By" not in st.session_state.df.columns:
