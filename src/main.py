@@ -367,7 +367,37 @@ class DataFrameChat:
             # Handle prompts irrespective of grammar, punctuation, or question marks
             prompt_lower = user_prompt.lower().replace("?", "").replace(",", "").replace(".", "").strip()
             prompt_words = set(prompt_lower.split())
+            # Handle German prompts irrespective of grammar, punctuation, or question marks
+            prompt_lower = user_prompt.lower().replace("?", "").replace(",", "").replace(".", "").strip()
+            prompt_words = set(prompt_lower.split())
             
+            # Prompt 1: "Hallo wie geht es dir"
+            hello_words = {"hallo", "wie", "geht", "es", "dir"}
+            if hello_words.issubset(prompt_words):
+                response = "Mir geht es gut. Wie kann ich Ihnen heute behilflich sein?"
+                st.session_state.chat_history.append({"role": "assistant", "content": response})
+                with st.chat_message("assistant"):
+                    st.markdown(response)
+            
+            # Prompt 2: "Ich brauche Ihre Hilfe, um die Daten für meinen Test zu finden"
+            elif {"ich", "brauche", "hilfe", "daten", "test", "finden"}.issubset(prompt_words):
+                response = "Ja, sicher. Können Sie mir mit den Einzelheiten helfen?"
+                st.session_state.chat_history.append({"role": "assistant", "content": response})
+                with st.chat_message("assistant"):
+                    st.markdown(response)
+            
+            # Prompt 3: "Ich brauche zwei Kunden-IDs, die migriert werden"
+            elif {"ich", "brauche", "zwei", "kunden-ids", "migriert"}.issubset(prompt_words):
+                migrated_ids = self.get_migrated_customer_ids(2)
+                if len(migrated_ids) == 2:
+                    response = f"Hier sind zwei migrierte Kunden - {migrated_ids[0]}, {migrated_ids[1]}."
+                elif migrated_ids:
+                    response = f"Nur ein migrierter Kunde gefunden - {migrated_ids[0]}."
+                else:
+                    response = "Keine migrierten Kunden-IDs gefunden."
+                st.session_state.chat_history.append({"role": "assistant", "content": response})
+                with st.chat_message("assistant"):
+                    st.markdown(response)
             # Prompt 1: "Hello"
             if "hello" in prompt_words:
                 response = "How may I assist you today?"
