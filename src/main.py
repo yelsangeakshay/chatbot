@@ -47,6 +47,8 @@ class DataFrameChat:
             st.session_state.show_success = False
         if "success_message" not in st.session_state:
             st.session_state.success_message = ""
+        if "logged_in" not in st.session_state:
+            st.session_state.logged_in = False
 
     def read_data(self, file) -> Optional[pd.DataFrame]:
         try:
@@ -135,8 +137,7 @@ class DataFrameChat:
             return f"I encountered an error: {str(e)}. Please try rephrasing your prompt."
 
     def handle_file_upload(self):
-        file_path="https://raw.githubusercontent.com/yelsangeakshay/chatbot/main/src/chattest.xlsx"
-        #file_path = "chattest.xlsx"
+        file_path = "https://raw.githubusercontent.com/yelsangeakshay/chatbot/main/src/chattest.xlsx"
         st.session_state.df = self.read_data(file_path)
         if st.session_state.df is not None:
             st.session_state.last_displayed_data = st.session_state.df.head()
@@ -344,7 +345,7 @@ class DataFrameChat:
                     pass
         return df
 
-    def run(self):
+    def run_chat_page(self):
         st.title("🤖 Vois ChatBot by DataDiggerz")
         model, temperature = self.setup_sidebar()
         self.initialize_llm(model, temperature)
@@ -441,6 +442,28 @@ class DataFrameChat:
                         with st.chat_message("assistant"):
                             st.markdown(response)
 
-if __name__ == "__main__":
+def login_page():
+    st.title("Login to Vois ChatBot")
+    st.write("Enter your credentials below (or leave blank to proceed):")
+    
+    with st.form(key='login_form'):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submit_button = st.form_submit_button(label="Login")
+        
+        if submit_button:
+            # Allow login with or without credentials (no validation)
+            st.session_state.logged_in = True
+            st.success("Logged in successfully!")
+            st.rerun()  # Rerun to redirect to chat page
+
+def main():
     app = DataFrameChat()
-    app.run()
+    
+    if not st.session_state.logged_in:
+        login_page()
+    else:
+        app.run_chat_page()
+
+if __name__ == "__main__":
+    main()
