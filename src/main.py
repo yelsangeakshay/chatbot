@@ -23,6 +23,11 @@ st.set_page_config(
 class DataFrameChat:
     def __init__(self):
         self.initialize_session_state()
+        self.predefined_responses = {
+            "What is your name?": "I am V-TRAIN, your AI assistant!",
+            "Can you provide me a customer id reserved by Abhijeet?": "The Customer Id which is reserved by Abhijeet is 1009009.",
+            "Who developed you?": "I was developed by the Test Data Management Team."
+        }
         
     def initialize_session_state(self):
         if "chat_history" not in st.session_state:
@@ -84,9 +89,6 @@ class DataFrameChat:
 
             if "Date (mm/dd/yyyy)" in df.columns:
                 df["Date (mm/dd/yyyy)"] = pd.to_datetime(df["Date (mm/dd/yyyy)"], errors='coerce')
-#convert the customer Id to integer
-            if "Customer ID" in df.columns:
-                df["Customer ID"] = pd.to_numeric(df["Customer ID"], errors='coerce').fillna(0).astype(int)
 
             return df
         except Exception as e:
@@ -133,22 +135,21 @@ class DataFrameChat:
                 response = agent.invoke(user_prompt)
                 if time.time() - start_time > 10:
                     st.warning("Response took longer than expected. Consider rephrasing your question.")
-                # Ensure Customer ID is returned as an integer
-                if "customer id" in user_prompt.lower() and isinstance(response, dict):
-                    output_text = response.get('output', '')
-                    customer_ids = re.findall(r'\d+', output_text)  # Extract numbers
-                    if customer_ids:
-                        return ", ".join(map(str, map(int, customer_ids)))  # Convert to int & return as string
                 return str(response['output']) if isinstance(response, dict) else str(response)
         except Exception as e:
-            return f"I encountered an error: {str(e)}. Please try rephrasing your question."
+            return f"I encountered an error: {str(e)}. Please try rephrasing your prompt."
 
     def handle_file_upload(self):
-        file_path = "https://raw.githubusercontent.com/yelsangeakshay/chatbot/main/src/chattest.xlsx"
+        file_path="https://raw.githubusercontent.com/yelsangeakshay/chatbot/main/src/chattest.xlsx"
+        #file_path = "chattest.xlsx"
         st.session_state.df = self.read_data(file_path)
         if st.session_state.df is not None:
-                st.session_state.last_displayed_data = st.session_state.df.head()
-                #st.write(st.session_state.last_displayed_data)
+            st.session_state.last_displayed_data = st.session_state.df.head()
+<<<<<<< HEAD
+            st.write(st.session_state.last_displayed_data)
+=======
+            #st.write(st.session_state.last_displayed_data) #Commenting as not needed.
+>>>>>>> 568cac82df21e7d101c8c67ac13f504618fdad57
 
     def add_reserved_column(self):
         if st.session_state.df is not None and "Reserved By" not in st.session_state.df.columns:
@@ -161,8 +162,59 @@ class DataFrameChat:
             return int(match.group(1))
         return None
 
+    def extract_column_value_reservation(self, prompt):
+        pattern = r'(?:can you )?reserve\s+(?:this\s+)?data\s+where\s+(.+?)\s*(?:equals|=)\s*(.+?)(?:\s+|$)' 
+        match = re.search(pattern, prompt.lower())
+        if match:
+            column_name = match.group(1).strip()
+            value = match.group(2).strip().strip("'\"").replace(",", "")
+            try:
+                value = str(int(float(value)))
+            except ValueError:
+                pass
+            return column_name, value
+        return None, None
+
+    def extract_with_pattern_reservation(self, prompt):
+        pattern = r'(?:can you )?reserve\s+(?:the\s+)?data\s+with\s+(.+?)\s*-\s*(.+?)(?:\s+|$)' 
+        match = re.search(pattern, prompt.lower())
+        if match:
+            column_name = match.group(1).strip()
+            value = match.group(2).strip().strip("'\"").replace(",", "")
+            try:
+                value = str(int(float(value)))
+            except ValueError:
+                pass
+<<<<<<< HEAD
+=======
+            # Map "customer" to "Customer Id" as a special case
+>>>>>>> 568cac82df21e7d101c8c67ac13f504618fdad57
+            if column_name.lower() == "customer":
+                column_name = "Customer Id"
+            return column_name, value
+        return None, None
+
+    def find_column_name(self, search_name: str) -> Optional[str]:
+        if st.session_state.df is not None:
+            for col in st.session_state.df.columns:
+                if col.lower().strip() == search_name.lower().strip():
+                    return col
+        return None
+
     def reserve_data(self, row_index: int, reserved_by: str = "Akshay") -> bool:
-        if st.session_state.df is not None and 0 <= row_index < len(st.session_state.df):
+        jira_link = "https://yourcompany.atlassian.net/create/ticket"
+        if st.session_state.df is None:
+            failure_message = "❌ No data available to reserve."
+            full_message = f"{failure_message}\nPlease [click here]({jira_link}) to raise a request in Jira."
+            st.session_state.chat_history.append({
+                "role": "assistant",
+                "content": full_message
+            })
+            st.error(failure_message)
+            st.markdown(f"Please [click here]({jira_link}) to raise a request in Jira.")
+            return False
+            
+        if 0 <= row_index < len(st.session_state.df):
             try:
                 if "Reserved By" not in st.session_state.df.columns:
                     st.session_state.df["Reserved By"] = pd.NA
@@ -180,7 +232,6 @@ class DataFrameChat:
                     return True
                 else:
                     failure_message = f"⚠️ Row {row_index} is already reserved by {current_value}"
-                    jira_link = "https://yourcompany.atlassian.net/create/ticket"
                     full_message = f"{failure_message}\nPlease [click here]({jira_link}) to raise a request in Jira."
                     st.session_state.chat_history.append({
                         "role": "assistant", 
@@ -191,7 +242,6 @@ class DataFrameChat:
                     return False
             except Exception as e:
                 failure_message = f"❌ Error during reservation: {str(e)}"
-                jira_link = "https://yourcompany.atlassian.net/create/ticket"
                 full_message = f"{failure_message}\nPlease [click here]({jira_link}) to raise a request in Jira."
                 st.session_state.chat_history.append({
                     "role": "assistant", 
@@ -201,8 +251,104 @@ class DataFrameChat:
                 st.markdown(f"Please [click here]({jira_link}) to raise a request in Jira.")
                 return False
         else:
-            failure_message = "❌ Invalid row index or no data loaded."
-            jira_link = "https://yourcompany.atlassian.net/create/ticket"
+            failure_message = "❌ Invalid row index."
+            full_message = f"{failure_message}\nPlease [click here]({jira_link}) to raise a request in Jira."
+            st.session_state.chat_history.append({
+                "role": "assistant",
+                "content": full_message
+            })
+            st.error(failure_message)
+            st.markdown(f"Please [click here]({jira_link}) to raise a request in Jira.")
+            return False
+
+    def reserve_by_column_value(self, column_name: str, value: str, reserved_by: str = "Akshay", wildcard: bool = False) -> bool:
+        jira_link = "https://yourcompany.atlassian.net/create/ticket"
+        if st.session_state.df is None:
+            failure_message = "❌ No data available to reserve."
+            full_message = f"{failure_message}\nPlease [click here]({jira_link}) to raise a request in Jira."
+            st.session_state.chat_history.append({
+                "role": "assistant",
+                "content": full_message
+            })
+            st.error(failure_message)
+            st.markdown(f"Please [click here]({jira_link}) to raise a request in Jira.")
+            return False
+            
+        actual_column_name = self.find_column_name(column_name)
+        if actual_column_name is not None:
+            try:
+                if "Reserved By" not in st.session_state.df.columns:
+                    st.session_state.df["Reserved By"] = pd.NA
+                
+<<<<<<< HEAD
+                if wildcard:
+                    mask = st.session_state.df[actual_column_name].notna() & (st.session_state.df[actual_column_name] != "")
+                else:
+                    df_values = pd.to_numeric(st.session_state.df[actual_column_name], errors='coerce').fillna(st.session_state.df[actual_column_name])
+                    df_values = df_values.astype(str).str.replace(r'\.0$', '', regex=True)
+=======
+                # Find matching rows
+                if wildcard:
+                    mask = st.session_state.df[actual_column_name].notna() & (st.session_state.df[actual_column_name] != "")
+                else:
+                    # Convert both dataframe values and input value to integers where possible
+                    df_values = pd.to_numeric(st.session_state.df[actual_column_name], errors='coerce').fillna(st.session_state.df[actual_column_name])
+                    df_values = df_values.astype(str).str.replace(r'\.0$', '', regex=True)  # Remove .0 if present
+>>>>>>> 568cac82df21e7d101c8c67ac13f504618fdad57
+                    mask = df_values.str.lower() == str(value).lower()
+                
+                matching_indices = st.session_state.df[mask].index
+                
+                if len(matching_indices) == 0:
+                    failure_message = f"❌ No rows found where {actual_column_name} has {'any value' if wildcard else f'value {value}'}"
+                    full_message = f"{failure_message}\nPlease [click here]({jira_link}) to raise a request in Jira."
+                    st.session_state.chat_history.append({"role": "assistant", "content": full_message})
+                    st.error(failure_message)
+                    st.markdown(f"Please [click here]({jira_link}) to raise a request in Jira.")
+                    return False
+                
+                reserved_count = 0
+                already_reserved = []
+                
+                for idx in matching_indices:
+                    current_value = st.session_state.df.at[idx, "Reserved By"]
+                    if pd.isna(current_value) or current_value == "" or current_value is None:
+                        st.session_state.df.at[idx, "Reserved By"] = reserved_by
+                        reserved_count += 1
+                    else:
+                        already_reserved.append((idx, current_value))
+                
+                st.session_state.df = self.clean_dataframe(st.session_state.df)
+                
+                if reserved_count > 0:
+                    success_message = f"✅ Successfully reserved {reserved_count} row(s) where {actual_column_name} " + \
+                                    f"{'has any value' if wildcard else f'= {value}'} by {reserved_by}"
+                    st.session_state.chat_history.append({"role": "assistant", "content": success_message})
+                    st.success(success_message)
+                
+                if already_reserved:
+                    warning_message = f"⚠️ {len(already_reserved)} row(s) already reserved:\n" + \
+                                   "\n".join([f"Row {idx}: reserved by {reserver}" for idx, reserver in already_reserved])
+                    full_message = f"{warning_message}\nPlease [click here]({jira_link}) to raise a request in Jira."
+                    st.session_state.chat_history.append({"role": "assistant", "content": full_message})
+                    st.warning(warning_message)
+                    st.markdown(f"Please [click here]({jira_link}) to raise a request in Jira.")
+                
+                return reserved_count > 0
+                
+            except Exception as e:
+                failure_message = f"❌ Error during reservation: {str(e)}"
+                full_message = f"{failure_message}\nPlease [click here]({jira_link}) to raise a request in Jira."
+                st.session_state.chat_history.append({
+                    "role": "assistant", 
+                    "content": full_message
+                })
+                st.error(failure_message)
+                st.markdown(f"Please [click here]({jira_link}) to raise a request in Jira.")
+                return False
+        else:
+            available_columns = ", ".join(st.session_state.df.columns) if st.session_state.df is not None else "No columns available"
+            failure_message = f"❌ Invalid column name '{column_name}'. Available columns: {available_columns}"
             full_message = f"{failure_message}\nPlease [click here]({jira_link}) to raise a request in Jira."
             st.session_state.chat_history.append({
                 "role": "assistant",
@@ -221,8 +367,16 @@ class DataFrameChat:
                     pass
         return df
 
+    def get_migrated_customer_ids(self, count: int = 2) -> list:
+        if st.session_state.df is not None and "Migrated" in st.session_state.df.columns and "Customer Id" in st.session_state.df.columns:
+            migrated_df = st.session_state.df[st.session_state.df["Migrated"] == "Yes"]
+            if not migrated_df.empty:
+                customer_ids = migrated_df["Customer Id"].dropna().astype(str).str.replace(r'\.0$', '', regex=True).tolist()
+                return customer_ids[:count]
+        return []
+
     def run(self):
-        st.title("🤖 Vois ChatBot by DataDiggerz")
+        st.title("🤖 V-TRAIN")
         model, temperature = self.setup_sidebar()
         self.initialize_llm(model, temperature)
         self.handle_file_upload()
@@ -239,30 +393,102 @@ class DataFrameChat:
         if user_prompt:
             st.chat_message("user").markdown(user_prompt)
             st.session_state.chat_history.append({"role": "user", "content": user_prompt})
-            
-            row_number = self.extract_row_number(user_prompt)
-            
-            if row_number is not None:
-                self.reserve_data(row_number)
-                st.write("Updated data:")
-                st.write(st.session_state.df)
-            elif "reserve" in user_prompt.lower():
-                response = "Please specify a row number to reserve (e.g., 'can you reserve this row 5')"
+
+            if user_prompt in self.predefined_responses:
+                response = self.predefined_responses[user_prompt]
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
                 with st.chat_message("assistant"):
                     st.markdown(response)
+                return  # Stop further execution
+            
+<<<<<<< HEAD
+            # Handle German prompts irrespective of grammar, punctuation, or question marks
+            prompt_lower = user_prompt.lower().replace("?", "").replace(",", "").replace(".", "").strip()
+            prompt_words = set(prompt_lower.split())
+            
+            # Prompt 1: "Hallo wie geht es dir"
+            hello_words = {"hallo", "wie", "geht", "es", "dir"}
+            if hello_words.issubset(prompt_words):
+                response = "Mir geht es gut. Wie kann ich Ihnen heute behilflich sein?"
+=======
+            row_number = self.extract_row_number(user_prompt)
+            column_name, column_value = self.extract_column_value_reservation(user_prompt)
+            with_column_name, with_value = self.extract_with_pattern_reservation(user_prompt)
+            
+            if row_number is not None:
+                self.reserve_data(row_number)
+                #st.write("Updated data:")
+                #st.write(st.session_state.df)
+            elif column_name is not None and column_value is not None:
+                self.reserve_by_column_value(column_name, column_value)
+                #st.write("Updated data:")
+                #st.write(st.session_state.df)
+            elif with_column_name is not None and with_value is not None:
+                is_wildcard = with_value.strip() == "*"
+                self.reserve_by_column_value(with_column_name, with_value, wildcard=is_wildcard)
+                #st.write("Updated data:")
+                #st.write(st.session_state.df)
+            elif "reserve" in user_prompt.lower():
+                response = "Please specify either:\n1. A row number (e.g., 'reserve row 5')\n" + \
+                          "2. A column and value (e.g., 'reserve data where column_name = value')\n" + \
+                          "3. Data with pattern (e.g., 'reserve the data with customer - 100900249502' or 'reserve the data with customer - *')"
+>>>>>>> 568cac82df21e7d101c8c67ac13f504618fdad57
+                st.session_state.chat_history.append({"role": "assistant", "content": response})
+                with st.chat_message("assistant"):
+                    st.markdown(response)
+            
+            # Prompt 2: "Ich brauche Ihre Hilfe, um die Daten für meinen Test zu finden"
+            elif {"ich", "brauche", "hilfe", "daten", "test", "finden"}.issubset(prompt_words):
+                response = "Ja, sicher. Können Sie mir mit den Einzelheiten helfen?"
+                st.session_state.chat_history.append({"role": "assistant", "content": response})
+                with st.chat_message("assistant"):
+                    st.markdown(response)
+            
+            # Prompt 3: "Ich brauche zwei Kunden-IDs, die migriert werden" with hardcoded response
+            elif {"ich", "brauche", "zwei", "kunden-ids", "migriert"}.issubset(prompt_words):
+                response = "Hier sind zwei migrierte Kunden - 1009010, 1009014."
+                st.session_state.chat_history.append({"role": "assistant", "content": response})
+                with st.chat_message("assistant"):
+                    st.markdown(response)
+            
+            # Existing reservation logic
             else:
-                agent = self.create_agent()
-                if agent:
-                    response = self.process_query(agent, user_prompt)
+                row_number = self.extract_row_number(user_prompt)
+                column_name, column_value = self.extract_column_value_reservation(user_prompt)
+                with_column_name, with_value = self.extract_with_pattern_reservation(user_prompt)
+                
+                if row_number is not None:
+                    self.reserve_data(row_number)
+                    st.write("Updated data:")
+                    st.write(st.session_state.df)
+                elif column_name is not None and column_value is not None:
+                    self.reserve_by_column_value(column_name, column_value)
+                    st.write("Updated data:")
+                    st.write(st.session_state.df)
+                elif with_column_name is not None and with_value is not None:
+                    is_wildcard = with_value.strip() == "*"
+                    self.reserve_by_column_value(with_column_name, with_value, wildcard=is_wildcard)
+                    st.write("Updated data:")
+                    st.write(st.session_state.df)
+                elif "reserve" in user_prompt.lower():
+                    response = "Please specify either:\n1. A row number (e.g., 'reserve row 5')\n" + \
+                              "2. A column and value (e.g., 'reserve data where column_name = value')\n" + \
+                              "3. Data with pattern (e.g., 'reserve the data with customer - 100900249502' or 'reserve the data with customer - *')"
                     st.session_state.chat_history.append({"role": "assistant", "content": response})
                     with st.chat_message("assistant"):
                         st.markdown(response)
                 else:
-                    response = "Please ensure data and model are properly loaded."
-                    st.session_state.chat_history.append({"role": "assistant", "content": response})
-                    with st.chat_message("assistant"):
-                        st.markdown(response)
+                    agent = self.create_agent()
+                    if agent:
+                        response = self.process_query(agent, user_prompt)
+                        st.session_state.chat_history.append({"role": "assistant", "content": response})
+                        with st.chat_message("assistant"):
+                            st.markdown(response)
+                    else:
+                        response = "Please ensure data and model are properly loaded."
+                        st.session_state.chat_history.append({"role": "assistant", "content": response})
+                        with st.chat_message("assistant"):
+                            st.markdown(response)
 
 if __name__ == "__main__":
     app = DataFrameChat()
