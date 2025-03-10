@@ -444,7 +444,7 @@ class DataFrameChat:
 
 def login_page():
     st.title("Login to Vois ChatBot")
-    st.write("Enter your credentials below (or leave blank to proceed):")
+    st.write("Enter your credentials below:")
     
     with st.form(key='login_form'):
         username = st.text_input("Username")
