@@ -473,7 +473,7 @@ class DataFrameChat:
                             st.markdown(response)
 
 def login_page():
-    st.title("Login to Vois ChatBot")
+    st.title("Login to V-TRAIN")
     st.write("Enter your credentials below:")
     
     with st.form(key='login_form'):
