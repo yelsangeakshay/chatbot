@@ -346,7 +346,7 @@ class DataFrameChat:
         return df
 
     def run_chat_page(self):
-        st.title("🤖 Vois ChatBot by DataDiggerz")
+        st.title("🤖 V-TRAIN")
         model, temperature = self.setup_sidebar()
         self.initialize_llm(model, temperature)
         self.handle_file_upload()
