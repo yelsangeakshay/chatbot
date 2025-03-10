@@ -371,7 +371,7 @@ class DataFrameChat:
             prompt_lower = user_prompt.lower().replace("?", "").replace(",", "").replace(".", "").strip()
             prompt_words = set(prompt_lower.split())
             
-            # Prompt 1: "Hallo wie geht es dir"
+            # Prompt 1: "Hallo wie geht es dir?"
             hello_words = {"hallo", "wie", "geht", "es", "dir"}
             if hello_words.issubset(prompt_words):
                 response = "Mir geht es gut. Wie kann ich Ihnen heute behilflich sein?"
@@ -393,7 +393,7 @@ class DataFrameChat:
                 with st.chat_message("assistant"):
                     st.markdown(response)
             
-            # Prompt 3: "Ich brauche zwei Kunden-IDs, die migriert werden"
+            # Prompt 4: "Ich brauche zwei Kunden-IDs, die migriert werden"
             elif {"ich", "brauche", "zwei", "kunden-ids", "migriert"}.issubset(prompt_words):
                 migrated_ids = self.get_migrated_customer_ids(2)
                 if len(migrated_ids) == 2:
