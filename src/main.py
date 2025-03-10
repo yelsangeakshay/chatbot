@@ -15,7 +15,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Streamlit configuration
 st.set_page_config(
-    page_title="V-TRAIN",
+    page_title="ChatBot by DataDiggerz",
     page_icon="💬",
     layout="wide"
 )
@@ -23,11 +23,6 @@ st.set_page_config(
 class DataFrameChat:
     def __init__(self):
         self.initialize_session_state()
-        self.predefined_responses = {
-            "What is your name?": "I am V-TRAIN, your AI assistant!",
-            "Can you provide me a customer id reserved by Abhijeet?": "The Customer Id which is reserved by Abhijeet is 1009009.",
-            "Who developed you?": "I was developed by the Test Data Management Team."
-        }
         
     def initialize_session_state(self):
         if "chat_history" not in st.session_state:
@@ -145,11 +140,7 @@ class DataFrameChat:
         st.session_state.df = self.read_data(file_path)
         if st.session_state.df is not None:
             st.session_state.last_displayed_data = st.session_state.df.head()
-<<<<<<< HEAD
             st.write(st.session_state.last_displayed_data)
-=======
-            #st.write(st.session_state.last_displayed_data) #Commenting as not needed.
->>>>>>> 568cac82df21e7d101c8c67ac13f504618fdad57
 
     def add_reserved_column(self):
         if st.session_state.df is not None and "Reserved By" not in st.session_state.df.columns:
@@ -185,10 +176,6 @@ class DataFrameChat:
                 value = str(int(float(value)))
             except ValueError:
                 pass
-<<<<<<< HEAD
-=======
-            # Map "customer" to "Customer Id" as a special case
->>>>>>> 568cac82df21e7d101c8c67ac13f504618fdad57
             if column_name.lower() == "customer":
                 column_name = "Customer Id"
             return column_name, value
@@ -280,21 +267,11 @@ class DataFrameChat:
                 if "Reserved By" not in st.session_state.df.columns:
                     st.session_state.df["Reserved By"] = pd.NA
                 
-<<<<<<< HEAD
                 if wildcard:
                     mask = st.session_state.df[actual_column_name].notna() & (st.session_state.df[actual_column_name] != "")
                 else:
                     df_values = pd.to_numeric(st.session_state.df[actual_column_name], errors='coerce').fillna(st.session_state.df[actual_column_name])
                     df_values = df_values.astype(str).str.replace(r'\.0$', '', regex=True)
-=======
-                # Find matching rows
-                if wildcard:
-                    mask = st.session_state.df[actual_column_name].notna() & (st.session_state.df[actual_column_name] != "")
-                else:
-                    # Convert both dataframe values and input value to integers where possible
-                    df_values = pd.to_numeric(st.session_state.df[actual_column_name], errors='coerce').fillna(st.session_state.df[actual_column_name])
-                    df_values = df_values.astype(str).str.replace(r'\.0$', '', regex=True)  # Remove .0 if present
->>>>>>> 568cac82df21e7d101c8c67ac13f504618fdad57
                     mask = df_values.str.lower() == str(value).lower()
                 
                 matching_indices = st.session_state.df[mask].index
@@ -367,16 +344,8 @@ class DataFrameChat:
                     pass
         return df
 
-    def get_migrated_customer_ids(self, count: int = 2) -> list:
-        if st.session_state.df is not None and "Migrated" in st.session_state.df.columns and "Customer Id" in st.session_state.df.columns:
-            migrated_df = st.session_state.df[st.session_state.df["Migrated"] == "Yes"]
-            if not migrated_df.empty:
-                customer_ids = migrated_df["Customer Id"].dropna().astype(str).str.replace(r'\.0$', '', regex=True).tolist()
-                return customer_ids[:count]
-        return []
-
     def run(self):
-        st.title("🤖 V-TRAIN")
+        st.title("🤖 Vois ChatBot by DataDiggerz")
         model, temperature = self.setup_sidebar()
         self.initialize_llm(model, temperature)
         self.handle_file_upload()
@@ -393,60 +362,42 @@ class DataFrameChat:
         if user_prompt:
             st.chat_message("user").markdown(user_prompt)
             st.session_state.chat_history.append({"role": "user", "content": user_prompt})
-
-            if user_prompt in self.predefined_responses:
-                response = self.predefined_responses[user_prompt]
-                st.session_state.chat_history.append({"role": "assistant", "content": response})
-                with st.chat_message("assistant"):
-                    st.markdown(response)
-                return  # Stop further execution
             
-<<<<<<< HEAD
-            # Handle German prompts irrespective of grammar, punctuation, or question marks
+            # Handle prompts irrespective of grammar, punctuation, or question marks
             prompt_lower = user_prompt.lower().replace("?", "").replace(",", "").replace(".", "").strip()
             prompt_words = set(prompt_lower.split())
             
-            # Prompt 1: "Hallo wie geht es dir"
-            hello_words = {"hallo", "wie", "geht", "es", "dir"}
-            if hello_words.issubset(prompt_words):
-                response = "Mir geht es gut. Wie kann ich Ihnen heute behilflich sein?"
-=======
-            row_number = self.extract_row_number(user_prompt)
-            column_name, column_value = self.extract_column_value_reservation(user_prompt)
-            with_column_name, with_value = self.extract_with_pattern_reservation(user_prompt)
-            
-            if row_number is not None:
-                self.reserve_data(row_number)
-                #st.write("Updated data:")
-                #st.write(st.session_state.df)
-            elif column_name is not None and column_value is not None:
-                self.reserve_by_column_value(column_name, column_value)
-                #st.write("Updated data:")
-                #st.write(st.session_state.df)
-            elif with_column_name is not None and with_value is not None:
-                is_wildcard = with_value.strip() == "*"
-                self.reserve_by_column_value(with_column_name, with_value, wildcard=is_wildcard)
-                #st.write("Updated data:")
-                #st.write(st.session_state.df)
-            elif "reserve" in user_prompt.lower():
-                response = "Please specify either:\n1. A row number (e.g., 'reserve row 5')\n" + \
-                          "2. A column and value (e.g., 'reserve data where column_name = value')\n" + \
-                          "3. Data with pattern (e.g., 'reserve the data with customer - 100900249502' or 'reserve the data with customer - *')"
->>>>>>> 568cac82df21e7d101c8c67ac13f504618fdad57
+            # Prompt 1: "Hello"
+            if "hello" in prompt_words:
+                response = "How may I assist you today?"
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
                 with st.chat_message("assistant"):
                     st.markdown(response)
             
-            # Prompt 2: "Ich brauche Ihre Hilfe, um die Daten für meinen Test zu finden"
-            elif {"ich", "brauche", "hilfe", "daten", "test", "finden"}.issubset(prompt_words):
-                response = "Ja, sicher. Können Sie mir mit den Einzelheiten helfen?"
+            # Prompt 2: "I need to reserve one data for my test"
+            elif {"i", "need", "reserve", "data", "test"}.issubset(prompt_words):
+                response = "Yes sure, could you please help me with more details?"
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
                 with st.chat_message("assistant"):
                     st.markdown(response)
             
-            # Prompt 3: "Ich brauche zwei Kunden-IDs, die migriert werden" with hardcoded response
-            elif {"ich", "brauche", "zwei", "kunden-ids", "migriert"}.issubset(prompt_words):
-                response = "Hier sind zwei migrierte Kunden - 1009010, 1009014."
+            # Prompt 3: "I need one mint registered customer which is migrated"
+            elif {"i", "need", "mint", "registered", "customer", "migrated"}.issubset(prompt_words):
+                response = "Please find the customer id which is mint registered and migrated- 1009("
+                st.session_state.chat_history.append({"role": "assistant", "content": response})
+                with st.chat_message("assistant"):
+                    st.markdown(response)
+            
+            # Prompt 4: "Can you please reserve the data for me?"
+            elif {"can", "you", "reserve", "data", "me"}.issubset(prompt_words):
+                response = "Sure Fork Waghmode"
+                st.session_state.chat_history.append({"role": "assistant", "content": response})
+                with st.chat_message("assistant"):
+                    st.markdown(response)
+            
+            # Prompt 5: "Can you show me the serve data?" (assuming "serve" might be a typo for "reserved")
+            elif {"can", "you", "show", "me", "data"}.issubset(prompt_words) and ("serve" in prompt_words or "reserved" in prompt_words):
+                response = "Please find the data which is migrated by Fork - 10090098"
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
                 with st.chat_message("assistant"):
                     st.markdown(response)
