@@ -400,20 +400,20 @@ class DataFrameChat:
                     st.markdown(response)
             # Prompt 1: "Hello"
             elif "hello" in prompt_words:
-                response = "How may I assist you today?"
+                response = "Hi, how may I assist you today?"
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
                 with st.chat_message("assistant"):
                     st.markdown(response)
             
-            # Prompt 2: "I need to reserve one data for my test"
+            # Prompt 2: "I need a data for my test"
             elif {"i", "need", "reserve", "data", "test"}.issubset(prompt_words):
                 response = "Yes sure, could you please help me with more details?"
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
                 with st.chat_message("assistant"):
                     st.markdown(response)
             
-            # Prompt 3: "I need one mint registered customer which is migrated"
-            elif {"i", "need", "mint", "registered", "customer", "migrated"}.issubset(prompt_words):
+            # Prompt 3: "I need one mint registered customer id which is migrated"
+            elif {"i", "need", "mint", "registered", "customer", "id", "migrated"}.issubset(prompt_words):
                 response = "Please find the customer id which is mint registered and migrated- 10090098"
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
                 with st.chat_message("assistant"):
@@ -421,7 +421,7 @@ class DataFrameChat:
             
             # Prompt 4: "Can you please reserve the data for me?"
             elif {"can", "you", "reserve", "data", "me"}.issubset(prompt_words):
-                response = "✔️Successfull, Data has been reserved for Abhijeet Waghmode"
+                response = "✔️Successful, Data has been reserved for Abhijeet Waghmode"
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
                 with st.chat_message("assistant"):
                     st.markdown(response)
