@@ -399,7 +399,7 @@ class DataFrameChat:
                 with st.chat_message("assistant"):
                     st.markdown(response)
             # Prompt 1: "Hello"
-            if "hello" in prompt_words:
+            elif "hello" in prompt_words:
                 response = "How may I assist you today?"
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
                 with st.chat_message("assistant"):
