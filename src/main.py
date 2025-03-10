@@ -15,7 +15,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Streamlit configuration
 st.set_page_config(
-    page_title="ChatBot by DataDiggerz",
+    page_title="V-TRAIN",
     page_icon="💬",
     layout="wide"
 )
@@ -411,17 +411,17 @@ class DataFrameChat:
                 
                 if row_number is not None:
                     self.reserve_data(row_number)
-                    st.write("Updated data:")
-                    st.write(st.session_state.df)
+                    #st.write("Updated data:")
+                    #st.write(st.session_state.df)
                 elif column_name is not None and column_value is not None:
                     self.reserve_by_column_value(column_name, column_value)
-                    st.write("Updated data:")
-                    st.write(st.session_state.df)
+                    #st.write("Updated data:")
+                    #st.write(st.session_state.df)
                 elif with_column_name is not None and with_value is not None:
                     is_wildcard = with_value.strip() == "*"
                     self.reserve_by_column_value(with_column_name, with_value, wildcard=is_wildcard)
-                    st.write("Updated data:")
-                    st.write(st.session_state.df)
+                    #st.write("Updated data:")
+                    #st.write(st.session_state.df)
                 elif "reserve" in user_prompt.lower():
                     response = "Please specify either:\n1. A row number (e.g., 'reserve row 5')\n" + \
                               "2. A column and value (e.g., 'reserve data where column_name = value')\n" + \
