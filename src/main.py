@@ -422,9 +422,12 @@ class DataFrameChat:
             # Prompt 3: "I need one mint registered customer id which is migrated"
             elif {"i", "need", "one", "mint", "registered", "customer", "id", "which", "is", "migrated"}.issubset(prompt_words):
                 response = f"Please find the customer id which is mint registered and migrated- 10090098"
+                reserve_message=f"✔️Successful, Data has been reserved for Abhijeet Waghmode"
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
                 with st.chat_message("assistant"):
                     st.markdown(response)
+                st.session_state.chat_history.append({"role": "assistant", "content": reserve_message})
+                st.success(reserve_message)
             
             # Prompt 4: "Can you please reserve the data for me?"
             elif {"can", "you", "reserve", "data", "me"}.issubset(prompt_words):
