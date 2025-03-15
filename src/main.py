@@ -429,7 +429,6 @@ class DataFrameChat:
             # Prompt 4: "Can you please reserve the data for me?"
             elif {"can", "you", "reserve", "data", "me"}.issubset(prompt_words):
                 success_message = f"✅ Successfully reserved 10090098 for Abhijeet " + \
-                                   # f"{'has any value' if wildcard else f'= {value}'} by {reserved_by}"
                 st.session_state.chat_history.append({"role": "assistant", "content": success_message})
                 st.success(success_message)
                 #response = "✔️Successful, Data has been reserved for Abhijeet Waghmode"
