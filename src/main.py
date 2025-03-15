@@ -428,13 +428,10 @@ class DataFrameChat:
             
             # Prompt 4: "Can you please reserve the data for me?"
             elif {"can", "you", "reserve", "data", "me"}.issubset(prompt_words):
-                success_message = f"✅ Successfully reserved 10090098 for Abhijeet " + \
-                st.session_state.chat_history.append({"role": "assistant", "content": success_message})
-                st.success(success_message)
-                #response = "✔️Successful, Data has been reserved for Abhijeet Waghmode"
-                #st.session_state.chat_history.append({"role": "assistant", "content": response})
-                #with st.chat_message("assistant"):
-                    #st.markdown(response)
+                response = "✔️Successful, Data has been reserved for Abhijeet Waghmode"
+                st.session_state.chat_history.append({"role": "assistant", "content": response})
+                with st.chat_message("assistant"):
+                    st.markdown(response)
             
             # Prompt 5: "Can you show me the serve data?" (assuming "serve" might be a typo for "reserved")
             elif {"can", "you", "show", "me", "data"}.issubset(prompt_words) and ("serve" in prompt_words or "reserved" in prompt_words):
