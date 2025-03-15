@@ -464,7 +464,7 @@ class DataFrameChat:
                 response = f"I have found the mint credentials for the requested customers:" +\
                            f"Customer Id 10090044: Username – test_10090012@vodafone.com, Password – Test@111"
                 reserve_message=f"✔️Successful, 10090044 has been reserved for Abhijeet Waghmode"
-                error_message=f"⚠️Customer Id 10090012: This data is currently reserved for user Nilotpal Das. Please contact him for the mint credentials.
+                error_message=f"⚠️Customer Id 10090012: This data is currently reserved for user Nilotpal Das. Please contact him for the mint credentials."
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
                 with st.chat_message("assistant"):
                     st.markdown(response)
