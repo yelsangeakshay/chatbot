@@ -407,7 +407,7 @@ class DataFrameChat:
                     st.markdown(response)
 
             # Prompt 1: "Hello"
-            elif "Hello, how are you?" in prompt_words:
+            elif "Hello" in prompt_words:
                 response = "Hello Abhijeet! I'm here and ready to help you with anything you need. How can I assist you today? 😊"
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
                 with st.chat_message("assistant"):
