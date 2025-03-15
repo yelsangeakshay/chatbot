@@ -444,9 +444,9 @@ class DataFrameChat:
 
 
             #Mint data
-            # Prompt 1: "Hello, how are you??"
-            elif {"hello", "how", "are", "you"}.issubset(prompt_words):
-                response = "Hello Abhijeet! I'm here and ready to help you with anything you need. How can I assist you today? 😊"
+            # Prompt 1: "Hi"
+            elif {"hi"}.issubset(prompt_words):
+                response = "Hello, how can I assist you today?"
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
                 with st.chat_message("assistant"):
                     st.markdown(response)
