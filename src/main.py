@@ -454,7 +454,7 @@ class DataFrameChat:
                     st.markdown(response)
             
             # Prompt 2: "I need your help in finding mint credentials for two fusionC customers."
-            elif {"i","need", "your", "help", "in", "finding", "mint", "credentials", "for", "two", "fusionC", "customers"}.issubset(prompt_words):
+            elif {"i","need", "your", "help", "in", "finding", "mint", "credentials", "for", "two", "fusionc", "customers"}.issubset(prompt_words):
                 response = "Sure! I can help you with that. Please provide the customer IDs so I can fetch the mint credentials for them."
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
                 with st.chat_message("assistant"):
