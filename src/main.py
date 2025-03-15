@@ -447,21 +447,21 @@ class DataFrameChat:
 
             #Mint data
             # Prompt 1: "Hello, how are you??"
-            elif {"Hello", "how", "are", "you"}.issubset(prompt_words):
+            elif {"hello", "how", "are", "you"}.issubset(prompt_words):
                 response = "Hello Abhijeet! I'm here and ready to help you with anything you need. How can I assist you today? 😊"
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
                 with st.chat_message("assistant"):
                     st.markdown(response)
             
             # Prompt 2: "I need your help in finding mint credentials for two fusionC customers."
-            elif {"I","need", "your", "help", "in", "finding", "mint", "credentials", "for", "two", "fusionC", "customers"}.issubset(prompt_words):
+            elif {"i","need", "your", "help", "in", "finding", "mint", "credentials", "for", "two", "fusionC", "customers"}.issubset(prompt_words):
                 response = "Sure! I can help you with that. Please provide the customer IDs so I can fetch the mint credentials for them."
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
                 with st.chat_message("assistant"):
                     st.markdown(response)
             
             # Prompt 3: "The customer Ids are- 10090012 and 10090044."
-            elif {"The", "customer", "Ids", "are", "10090012", "and", "10090044"}.issubset(prompt_words):
+            elif {"the", "customer", "ids", "are", "10090012", "and", "10090044"}.issubset(prompt_words):
                 response = f"I have found the mint credentials for the requested customers:" +\
                            f"Customer Id 10090044: Username – test_10090012@vodafone.com, Password – Test@111"
                 reserve_message=f"✔️Successful, 10090044 has been reserved for Abhijeet Waghmode"
