@@ -479,7 +479,7 @@ class DataFrameChat:
                     st.markdown(response)
             
             # Prompt 2: "I need with dummy MAC."
-            elif {"i","need", "with", "dummy", "MAC"}.issubset(prompt_words):
+            elif {"i","need", "with", "dummy", "mac"}.issubset(prompt_words):
                 response = "Sure! any other special request?"
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
                 with st.chat_message("assistant"):
