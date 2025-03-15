@@ -389,9 +389,12 @@ class DataFrameChat:
             # Prompt 3: "Ich brauche zwei Kunden-IDs, die migriert werden"
             elif {"ich", "brauche", "zwei", "kunden-ids", "migriert"}.issubset(prompt_words):
                 response = "Hier sind zwei migrierte Kunden - 1009010, 1009014."
+                reserve_message=f"✔️Erfolgreich, Daten wurden für Abhijeet Waghmode reserviert"
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
                 with st.chat_message("assistant"):
                     st.markdown(response)
+                st.session_state.chat_history.append({"role": "assistant", "content": reserve_message})
+                st.success(reserve_message)
             
             # Prompt 4: "Ich brauche zwei Kunden-IDs, die migriert werden"
             elif {"ich", "brauche", "zwei", "kunden-ids", "migriert"}.issubset(prompt_words):
