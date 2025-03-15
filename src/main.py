@@ -430,14 +430,9 @@ class DataFrameChat:
                 st.session_state.chat_history.append({"role": "assistant", "content": reserve_message})
                 st.success(reserve_message)
             
-            # Prompt 4: "Can you please reserve the data for me?"
-            elif {"can", "you", "reserve", "data", "me"}.issubset(prompt_words):
-                response = "✔️Successful, Data has been reserved for Abhijeet Waghmode"
-                st.session_state.chat_history.append({"role": "assistant", "content": response})
-                #with st.chat_message("assistant"):
-                st.success(response)
+        
             
-            # Prompt 5: "Can you show me the serve data?" (assuming "serve" might be a typo for "reserved")
+            # Prompt 4: "Can you show me the serve data?" (assuming "serve" might be a typo for "reserved")
             elif {"can", "you", "show", "me", "data"}.issubset(prompt_words) and ("serve" in prompt_words or "reserved" in prompt_words):
                 response = "Please find the data which is reserved by Abhijeet Waghmode - 10090098"
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
@@ -473,13 +468,37 @@ class DataFrameChat:
                 st.success(reserve_message)
                 st.session_state.chat_history.append({"role": "assistant", "content": error_message})
                 st.error(error_message)
-            
-            # Prompt 4: "Can you please reserve the data for me?"
-            elif {"can", "you", "reserve", "data", "me"}.issubset(prompt_words):
-                response = "✔️Successful, Data has been reserved for Abhijeet Waghmode"
+
+
+            #Delphi data
+            # Prompt 1: "I need delphi sync customer for my test."
+            elif {"i", "need", "delphi", "sync", "customer", "for", "my", "test"}.issubset(prompt_words):
+                response = "Delphi sync customers are available with both real and dummy MAC addresses. Could you please confirm whether you need a customer ID with a real MAC or a dummy MAC?"
                 st.session_state.chat_history.append({"role": "assistant", "content": response})
-                #with st.chat_message("assistant"):
-                st.success(response)
+                with st.chat_message("assistant"):
+                    st.markdown(response)
+            
+            # Prompt 2: "I need with dummy MAC."
+            elif {"i","need", "with", "dummy", "MAC"}.issubset(prompt_words):
+                response = "Sure! any other special request?"
+                st.session_state.chat_history.append({"role": "assistant", "content": response})
+                with st.chat_message("assistant"):
+                    st.markdown(response)
+            
+            # Prompt 3: "Yes, the customer should not be mint registered."
+            elif {"yes", "the", "customer", "should", "not", "be", "mint", "registered"}.issubset(prompt_words):
+                response = f"I have found a Delphi sync customer that is not mint registered. Please find the customer ID: 10090132" 
+                reserve_message=f"✔️Successful, 10090132 has been reserved for Abhijeet Waghmode"
+                #error_message=f"⚠️Customer Id 10090012: This data is currently reserved for user Nilotpal Das. Please contact him for the mint credentials."
+                st.session_state.chat_history.append({"role": "assistant", "content": response})
+                with st.chat_message("assistant"):
+                    st.markdown(response)
+                st.session_state.chat_history.append({"role": "assistant", "content": reserve_message})
+                st.success(reserve_message)
+                #st.session_state.chat_history.append({"role": "assistant", "content": error_message})
+                #st.error(error_message)
+            
+          
             
             # Existing reservation logic
             else:
